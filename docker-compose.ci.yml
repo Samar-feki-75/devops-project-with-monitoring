@@ -1,9 +1,19 @@
-version: "3.9"
-
+version: "3.8"
 services:
-  backend:
+  db:
+    image: postgres:15
     environment:
-      - DOTNET_ENV=CI
-    command: ["dotnet", "test", "/src/backend.Tests/backend.Tests.csproj", "--no-build", "-c", "Release"]
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: appdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
+  backend:
+    build:
+      context: ./backend/backend
+    depends_on:
+      - db
 
+volumes:
+  db_data:

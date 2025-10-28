@@ -89,8 +89,6 @@ docker-compose up --build
 - Features:
   - Builds backend and frontend **inside Docker containers**
   - Runs backend **unit tests** inside Docker
-  - Builds frontend and optionally runs tests inside Docker
-  - Lints Dockerfiles using `hadolint`
 - CI uses `docker-compose.yml + docker-compose.ci.yml` for containerized builds.
 
 **Trigger:**

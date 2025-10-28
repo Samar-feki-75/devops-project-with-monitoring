@@ -29,22 +29,8 @@ jobs:
       # 4️⃣ Run backend tests inside container
       - name: Run backend tests
         run: |
-          # 1. Start DB in detached mode
-          docker compose -f docker-compose.ci.yml up -d
-
-          # 2. Wait for DB to be ready
-          until docker compose exec db pg_isready -U user; do sleep 1; done
-
-          # 3. Run backend tests in a new container that **exits after tests**
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm backend \
-          dotnet test /src/backend.Tests/backend.Tests.csproj --no-build -c Release
-
-          # 4. Tear down
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml down
-
+           docker compose up -d db
+           docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm backend \ dotnet test /src/backend.Tests/backend.Tests.csproj --no-build -c Releas
+       
               
-      # 5️⃣ Optional: Lint Dockerfiles
-      - name: Lint Dockerfiles
-        run: |
-          docker run --rm -i hadolint/hadolint < backend/Dockerfile || true
-          docker run --rm -i hadolint/hadolint < frontend/Dockerfile || true
+      
