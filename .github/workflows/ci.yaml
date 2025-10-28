@@ -12,39 +12,36 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ github.workspace }}   # 👈 All steps now run from repo root
+        working-directory: ${{ github.workspace }}
 
     steps:
-      # 1️⃣ Checkout repository
       - uses: actions/checkout@v4
 
-      # 2️⃣ Verify Docker versions
-      - name: Check Docker versions
-        run: |
-          docker --version
-          docker compose version
+      - name: Check Docker Compose version
+        run: docker compose version
 
-      # 3️⃣ Build services
+      - name: Debug workspace
+        run: |
+          pwd
+          ls -la
+
       - name: Build Docker Compose services
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build
 
-      # 4️⃣ Run backend tests
       - name: Run backend tests
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm backend dotnet test /src/backend.Tests/backend.Tests.csproj --no-build -c Release
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm backend dotnet test /src/backend.Tests/backend.Tests.csproj --no-build -c Release
 
-      # 5️⃣ Run frontend build
       - name: Run frontend build
         run: |
           docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm frontend npm ci
           docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm frontend npm run build
 
-      # 6️⃣ Optional: Lint Dockerfiles
       - name: Lint Dockerfiles
         run: |
           docker run --rm -i hadolint/hadolint < backend/Dockerfile || true
           docker run --rm -i hadolint/hadolint < frontend/Dockerfile || true
 
-      # 7️⃣ (Optional) Clean up containers, networks, and volumes
       - name: Cleanup
         if: always()
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v
