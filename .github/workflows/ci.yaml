@@ -9,30 +9,42 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}   # 👈 All steps now run from repo root
+
     steps:
+      # 1️⃣ Checkout repository
       - uses: actions/checkout@v4
 
+      # 2️⃣ Verify Docker versions
       - name: Check Docker versions
         run: |
           docker --version
           docker compose version
 
+      # 3️⃣ Build services
       - name: Build Docker Compose services
-        working-directory: ${{ github.workspace }}
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build
 
+      # 4️⃣ Run backend tests
       - name: Run backend tests
-        working-directory: ${{ github.workspace }}
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm backend dotnet test /src/backend.Tests/backend.Tests.csproj --no-build -c Release
 
+      # 5️⃣ Run frontend build
       - name: Run frontend build
-        working-directory: ${{ github.workspace }}
         run: |
           docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm frontend npm ci
           docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm frontend npm run build
 
+      # 6️⃣ Optional: Lint Dockerfiles
       - name: Lint Dockerfiles
-        working-directory: ${{ github.workspace }}
         run: |
           docker run --rm -i hadolint/hadolint < backend/Dockerfile || true
           docker run --rm -i hadolint/hadolint < frontend/Dockerfile || true
+
+      # 7️⃣ (Optional) Clean up containers, networks, and volumes
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v
