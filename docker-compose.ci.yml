@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  backend:
+    environment:
+      - DOTNET_ENV=CI
+    command: ["dotnet", "test", "/src/backend.Tests/backend.Tests.csproj", "--no-build", "-c", "Release"]
+
+  frontend:
+    environment:
+      - NODE_ENV=production

@@ -1,0 +1,60 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: appdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - appnet
+
+  backend:
+    build:
+      context: ./backend/backend
+    depends_on:
+      - db
+    environment:
+      - ConnectionStrings__Default=Host=db;Database=appdb;Username=user;Password=pass
+    ports:
+      - "5000:5000"
+    networks:
+      - appnet
+
+  frontend:
+    build:
+      context: ./frontend/frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - appnet
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - appnet
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - appnet
+
+volumes:
+  db_data:
+  grafana_data:
+
+networks:
+  appnet:

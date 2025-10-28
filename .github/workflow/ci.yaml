@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.16
+        options: --privileged
+
+    steps:
+      # 1️⃣ Checkout repo
+      - uses: actions/checkout@v4
+
+      # 2️⃣ Set up Docker Compose
+      - name: Set up Docker Compose
+        run: |
+          docker-compose -v
+
+      # 3️⃣ Build all Docker images
+      - name: Build Docker Compose services
+        run: docker-compose -f docker-compose.yml -f docker-compose.ci.yml build
+
+      # 4️⃣ Run backend tests inside container
+      - name: Run backend tests
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm backend dotnet test /src/backend.Tests/backend.Tests.csproj --no-build -c Release
+
+      # 5️⃣ Optionally run frontend build/test inside container
+      - name: Run frontend build
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm frontend npm ci
+          docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm frontend npm run build
+
+      # 6️⃣ Optional: Lint Dockerfiles
+      - name: Lint Dockerfiles
+        run: |
+          docker run --rm -i hadolint/hadolint < backend/Dockerfile || true
+          docker run --rm -i hadolint/hadolint < frontend/Dockerfile || true
